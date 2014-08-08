@@ -85,3 +85,7 @@ Vert.verify?(outfit, outfit_avro_schema)
 ```
 
 Read more about Avro's JSON schema specification [here](https://avro.apache.org/docs/1.7.6/spec.html#schemas).
+
+---
+
+Licensed under the [MIT Licence](http://opensource.org/licenses/MIT). See LICENSE.txt.
