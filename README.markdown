@@ -6,7 +6,7 @@ Vert is a library for verifying and validating data. Vert wraps common
 data verfication and vaildation tests into two two high level
 functions, `verify` and `validate`. These methods output an error hash
 with descriptive errors, if you require boolean outputs you can use
-the `verified?` and `validated?` methods instead.
+the `verify?` and `validate?` methods instead.
 
 Use `validate` when you need to validate the shape of your hashes and
 ensure that keys are present. While validate can check array types and
@@ -62,9 +62,10 @@ Vert.validate(outfit, {value_keys: [:jewelry]})
     :message=>"The hash does not contain the following key/s :- jewelry"}]}
 ```
 
-Using `validated?` instead gives you a boolean which is useful
+Using `validate?` instead gives you a boolean which is useful
 for runtime validation checks.
 
 ```ruby
-Vert.validated?(outfit, {value_keys: [:jewelry]})
+Vert.validate?(outfit, {value_keys: [:jewelry]})
+=> false
 ```
