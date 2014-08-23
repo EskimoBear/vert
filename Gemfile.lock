@@ -1,0 +1,14 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    avro (1.7.7)
+      multi_json
+    multi_json (1.10.1)
+    oj (2.10.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  avro (~> 1.7.5)
+  oj
