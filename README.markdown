@@ -63,6 +63,7 @@ You can test the format of the entire hash, by testing each of the nested
 hashes and arrays.
 
 ```ruby
+
 if Vert.validate(outfit, {array_keys: [:clothing]})
     if Vert.validate(outfit[:clothing].first, {value_keys: [:watch], hash_keys: [:shoes]})
         Vert.validate(outfit[:clothing].first[:shoes], {value_keys: [:brand, :size]})
@@ -94,10 +95,9 @@ You can perform all the above validations with JSON data, just use
 JSON Avro schema. This will test all your values, not just arrays and
 hashes.
 
-Given the JSON below
+Given the JSON object *outfit_json*.
 
 ```JSON
-outfit_json =
 {"clothing":
    [{"shoes":
       {"brand": "Nike", 
@@ -106,10 +106,9 @@ outfit_json =
    }]}
 ```
 
-and the matchihng Avro schema (Avro schemas are plain JSON).
+and the matchihng Avro schema, *outfit_avro_schema* (Avro schemas are plain JSON).
 
 ```JSON
-outfit_avro_schema = 
 {
   "type": "record",
   "name": "Outfit",
