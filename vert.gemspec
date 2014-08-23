@@ -7,6 +7,7 @@ Gem::Specification.new do |s|
   
   s.authors = ["Eskimo Bear"]
   s.email = 'dev@eskimobear.com'
+  s.homepage = 'https://github.com/EskimoBear/Vert/'
   
   s.files = ["lib/vert.rb"]     
   s.platform = Gem::Platform::RUBY
