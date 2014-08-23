@@ -51,7 +51,7 @@ You can get Vert by installing the gem from RubyGems
 
 ```ruby
 gem install vert
-``
+```
 
 Vert has been tested on MRI Ruby 1.9.3. Vert depends on the avro gem
 which has weird behaviour on Ruby 2.0 and up.
