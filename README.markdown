@@ -1,6 +1,8 @@
 # Vert
 
-**Test the correctness of data**
+**_Test the correctness of data_**
+
+**The public API is not yet stable and methods are subject to change.**
 
 Vert is a convenient library for validating data. Vert supports
 validation of keyed data in hash maps and validation of JSON using
@@ -43,8 +45,20 @@ Passing an Avro JSON schema with `validate_json` performs the following tests on
 
 1. Is not an example of Avro schema. Note that an error will be thrown when the provided schema is invalid.
 
+## Installation
+
+You can get Vert by installing the gem from RubyGems
+
+```ruby
+gem install vert
+``
+
+Vert has been tested on MRI Ruby 1.9.3. Vert depends on the avro gem
+which has weird behaviour on Ruby 2.0 and up.
+
 ## Usage
 
+### Validating hashes
 You can use `validate` to ensure that the format of your hash is correct.
 
 Given the following hash:
@@ -60,13 +74,13 @@ outfit =
 ```
 
 You can test the format of the entire hash, by testing each of the nested
-hashes and arrays.
+hashes and arrays. When all tests are successful Vert returns nil.
 
 ```ruby
 
-if Vert.validate(outfit, {array_keys: [:clothing]})
-    if Vert.validate(outfit[:clothing].first, {value_keys: [:watch], hash_keys: [:shoes]})
-        Vert.validate(outfit[:clothing].first[:shoes], {value_keys: [:brand, :size]})
+if Vert.validate(outfit, {keys: {array_keys: [:clothing]}})
+    if Vert.validate(outfit[:clothing].first, {keys:{value_keys: [:watch], hash_keys: [:shoes]}})
+        Vert.validate(outfit[:clothing].first[:shoes], {keys: {value_keys: [:brand, :size]}})
     end
 end
 => nil
@@ -76,19 +90,19 @@ If your *outfit* hash was expected to also contain a jewelry key, the
 following call will produce an error message:
 
 ```ruby
-Vert.validate(outfit, {value_keys: [:jewelry]})
-=>{:errors=>
-  [{:type=>"Vert::ValidationError",
-    :message=>"The hash does not contain the following key/s :- jewelry"}]}
+Vert.validate(outfit, {keys: {value_keys: [:jewelry]}})
+=>"The data does not contain the following key/s Missing keys:- jewelry"
 ```
 
-Using `validate?` instead gives you a boolean which is useful
+Using `validate?` instead gives you a boolean output which is useful
 for runtime validation tests.
 
 ```ruby
-Vert.validate?(outfit, {value_keys: [:jewelry]})
+Vert.validate?(outfit, {keys: {value_keys: [:jewelry]}})
 => false
 ```
+
+### Validating JSON
 
 You can perform all the above validations with JSON data, just use
 `validate_json` with a JSON represenation of *outfit* and a matching
@@ -164,7 +178,46 @@ requirements. Read more about Avro's JSON schema specification [here](https://av
 
 ### Custom Error Handling 
 
-You can also apply custom errors 
+While Vert will conveniently provide validation of your program's
+inputs you may find yourself wanting more than the default error
+messages that Vert provides. To make this process easy, you can specify
+a custom error to be thrown for any of Vert's validation tests. This
+way you can give your program helpful error messages wihtout
+re-implementing any of Vert's validations.
+
+```ruby
+user = {
+    "name" => "Jacob Smith",
+    "email" => "jasmith@example.com"
+    "username" => "JDog249"
+}
+```
+
+Given the *user* hash requires a "phone" key as well, we can get Vert
+to throw a custom error when validating this hash.
+
+```ruby
+options = {
+    :keys => {
+        :value_keys => ["name", "email", "username", "phone"]
+    },
+    :custom_errors => {
+        :absent_key => "The user hash must have name, email, username
+    and phone."
+    }
+}
+
+Vert.validate(user, options)
+
+=>"The user hash must have name, email, username and phone.
+Missing keys:- phone"
+```
+
+The options hash throws the custom error provided instead of the
+default :absent_key error. You also get a list of the missing keys.
+
+You can get the list of all custom error keys to throw prsonalized
+error messages using `Vert.get_error_keys`.
 
 ---
 
