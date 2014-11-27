@@ -40,14 +40,14 @@ module Vert
   EMPTY_JSON_OBJECT_ERROR = "The JSON object is empty."
   EMPTY_JSON_OBJECT_ERROR_KEY = :empty_json_object
 
-  MALFORMED_JSON_ERROR = "The JSON string is malformed."
+  MALFORMED_JSON_ERROR = "The JSON string is malformed"
   MALFORMED_JSON_ERROR_KEY = :malformed_json
 
   #error messages for avro verification
-  INVALID_AVRO_SCHEMA_ERROR = "The avro schema is invalid."
+  INVALID_AVRO_SCHEMA_ERROR = "The avro schema is invalid"
   INVALID_AVRO_SCHEMA_ERROR_KEY = :invalid_avro_schema
 
-  INVALID_AVRO_DATUM_ERROR = "The JSON provided is not an instance of the schema:"
+  INVALID_AVRO_DATUM_ERROR = "The JSON provided is not an instance of the schema."
   INVALID_AVRO_DATUM_ERROR_KEY = :invalid_avro_datum
 
   #Enums 
@@ -74,6 +74,8 @@ module Vert
   #input validation
   OPTIONS_HASH_EMPTY = "The options hash must contain keys"
   OPTIONS_NOT_A_HASH = "The options parameter must be a hash"
+  OPTIONS_HASH_FORMAT = "{:keys => {}, :custom_errors => {}}"
+  OPTIONS_JSON_HASH_FORMAT = "{:schema => \"avro shcema\", :custom_errors => {}}"
   OPTIONS_HASH_MISSING_VALID_KEYS = "The options hash contains no valid keys. The valid symbol keys are - "
   KEYS_HASH_MISSING_VALID_KEYS = "The options hash contains no valid keys for the :keys hash. The valid symbol keys are - "
   CUSTOM_ERRORS_HASH_MISSING_VALID_KEYS = "The options hash contains no valid keys for the :custom_errors hash. The valid symbol keys are - "
@@ -82,7 +84,7 @@ module Vert
 
   def validate(hash, options = nil) 
     unless options.nil?
-      check_options_format(options)
+      check_options_format(options, OPTIONS_HASH_FORMAT)
       check_options(options)
     end
     test_validations(hash, options)
@@ -106,7 +108,7 @@ module Vert
 
   def validate_json(json, options = nil)
     unless options.nil?
-      check_options_format(options)
+      check_options_format(options, OPTIONS_JSON_HASH_FORMAT)
       check_json_options(options) 
     end
     test_validations_json(json, options)
@@ -138,8 +140,8 @@ module Vert
     end
   end
 
-  def check_options_format(options) 
-    raise InputError, OPTIONS_NOT_A_HASH unless options.is_a?(Hash)
+  def check_options_format(options, options_format) 
+    raise InputError, "#{OPTIONS_NOT_A_HASH}. The options hash has the following format:- #{options_format}" unless options.is_a?(Hash)
     raise InputError, OPTIONS_HASH_EMPTY if options.empty?
     if options.keys.include?(:custom_errors)
       raise_when_all_keys_missing(options[:custom_errors], CUSTOM_ERRORS_HASH_MISSING_VALID_KEYS, ERROR_KEY_ENUM.keys)
@@ -347,7 +349,7 @@ module Vert
     raise_custom_error(hash, options, EMPTY_JSON_OBJECT_ERROR_KEY){|hash| hash.empty?}
   rescue Oj::ParseError => exception
     detail = "#{exception.message.gsub( /\[.+\]/, "").rstrip}."
-    raise ValidationError, "#{build_error_message(options, MALFORMED_JSON_ERROR_KEY)}. #{detail}"
+    raise ValidationError, "#{build_error_message(options, MALFORMED_JSON_ERROR_KEY)}, #{detail}"
   else
     hash
   end

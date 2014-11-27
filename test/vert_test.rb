@@ -81,7 +81,7 @@ class VertTest < MiniTest::Unit::TestCase
     result
   end
 
-  def test_input_options_hash_errors
+  def test_validate_input_options_hash_errors
     options_hash_test = Vert.validate(@valid_data, [])
     assert_match(/#{Vert::OPTIONS_NOT_A_HASH}/, options_hash_test,
                  "Expects that a hash is passed for the options parameter")
@@ -217,7 +217,7 @@ class VertTest < MiniTest::Unit::TestCase
                  "Expects that the options hash contains at least one valid key when present")
   end
 
-  def test_validate_json_default_successful
+  def test_validate_json_successful
     assert(Vert.validate_json(@valid_json).nil?, "Expects that the json passes validation tests")
   end
 
