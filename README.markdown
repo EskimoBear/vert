@@ -1,6 +1,5 @@
 # Vert
-
-**Validate Ruby hashes and JSON data.**
+Validate Ruby hashes and JSON data.
 
 **The public API is not yet stable and methods are subject to change.**
 
