@@ -1,223 +1,213 @@
 # Vert
 
-**_Test the correctness of data_**
+**Validate Ruby hashes and JSON data.**
 
 **The public API is not yet stable and methods are subject to change.**
 
-Vert is a convenient library for validating data. Vert supports
-validation of keyed data in hash maps and validation of JSON using
-Avro schemas. Use Vert in your test suites, or for data checks on
-inputs and outputs at system boundaries. Vert provides specific
-facilities for handling common data input exceptions and helps you avoid
-rewriting boilerplate error handling code. 
+##Rationale
+Vert was created to eliminate repetitive boilerplate validation code for Ruby data.
+Vert supports validations on hashes for internal data and JSON for external data. Vert will perform standard tests on your data but you can also declare additional tests that will check the format of your data.
 
-Use `validate` when you need to validate the 'format' of complicated
-hashes and ensure that keys are present. You can use `validate_json`
-if your data is specified in JSON. You can test for stronger data integrity guarantees than `validate` if you specify a matching Avro schema.
-
-Vert wraps common data verfication and vaildation tests into two
-high level functions, `validate` and `validate_json`. These methods
-output an error hash with descriptive errors, if you require boolean
-outputs you can use the `validate?` and `validate_json?` methods instead.
-
-`validate` performs the following default tests on hashes:
-
-1. Is not a hash
-1. Is not empty
-
-Passing a `key` hash with `validate` allows you to test for the
-existence of keys. In the case of keys which map to values of collections
-like hash keys and array keys, `validate` also tests that these
-collections are non-empty. You can perform the following tests:
-
-1. Specified key/s exists
-1. Specified key/s with non-empty array values exists
-1. Specified key/s with non-empty hash values exists
-
-`validate_json` performs the following default tests on JSON string:
-
-1. Is a string
-1. Is not an empty string
-1. Is not an empty JSON object
-1. Is not malformed JSON
- 
-Passing an Avro JSON schema with `validate_json` performs the following tests on JSON strings:
-
-1. Is not an example of Avro schema. Note that an error will be thrown when the provided schema is invalid.
+Vert also eliminates boilerplate code for producing error messages by allowing you to declare application specific error messages for each failing test. 
 
 ## Installation
 
-You can get Vert by installing the gem from RubyGems
+Install the gem
 
 ```ruby
 gem install vert
 ```
 
-Vert has been tested on MRI Ruby 1.9.3. Vert depends on the avro gem
-which has weird behaviour on Ruby 2.0 and up.
+Vert has been tested on MRI Ruby 1.9.3.
 
-## Usage
+##Usage
 
-### Validating hashes
-You can use `validate` to ensure that the format of your hash is correct.
+###Hash validation
 
-Given the following hash:
+Use `validate` for validating hashes
 
 ```ruby
-outfit =
-{:clothing=>
-   [{:shoes=>
-      {:brand=>"Nike", 
-       :size=>9}, 
-     :watch=> "Casio"
-   }]}
+Vert.validate({ :key => "value"})
+#=> nil
+#returns nil when all tests pass
+Vert.validate(0)
+#=> "Not a hash."
+#returns error message for failing test
 ```
 
-You can test the format of the entire hash, by testing each of the nested
-hashes and arrays. When all tests are successful Vert returns nil.
+`validate` performs the following default tests on hashes:
+
+1. Validates that data is a hash
+1. Validates that data is a non-empty hash
+
+Use `validate?` instead when you need boolean outputs. You should use this
+method when you don't require the error message.
 
 ```ruby
-
-if Vert.validate(outfit, {keys: {array_keys: [:clothing]}})
-    if Vert.validate(outfit[:clothing].first, {keys:{value_keys: [:watch], hash_keys: [:shoes]}})
-        Vert.validate(outfit[:clothing].first[:shoes], {keys: {value_keys: [:brand, :size]}})
-    end
-end
-=> nil
+Vert.validate?({ :key => "value"})
+#=> true
+#returns true when all tests pass
+Vert.validate?(0)
+#=> false
+#returns false when tests fail
 ```
 
-If your *outfit* hash was expected to also contain a jewelry key, the
-following call will produce an error message:
+Passing the `:key` hash with `validate` allows you to test for the presence of keys. In the case of keys which map to collections like hashes and arrays, you can also test that they are non-empty.
+
+Given the following `person` hash
 
 ```ruby
-Vert.validate(outfit, {keys: {value_keys: [:jewelry]}})
-=>"The data does not contain the following key/s Missing keys:- jewelry"
+> person = {:firstname=>"Daria", :lastname=>"James", :address=>{:street=>"Potter Lane", :town=>"Dereon"}}
 ```
 
-Using `validate?` instead gives you a boolean output which is useful
-for runtime validation tests.
+We can create a `keys` hash which tests for the presence of keys. This way we are warned that the person hash does not contain an `:age` key.
 
 ```ruby
-Vert.validate?(outfit, {keys: {value_keys: [:jewelry]}})
-=> false
+> keys = {:value_keys=>[:firstname, :lastname, :age], :hash_keys=>[:address]}
+> Vert.validate(person, :keys => keys)
+#=> "The data does not contain the following key/s Missing keys:- age"
 ```
 
-### Validating JSON
+Say we've added `:age` to person to correct this mistake, we now get all tests passing for person.
 
-You can perform all the above validations with JSON data, just use
-`validate_json` with a JSON represenation of *outfit* and a matching
-JSON Avro schema. This will test all your values, not just arrays and
+```ruby
+> person[:age] = 22
+> Vert.validate(person, :keys => keys)
+#=> nil
+```
+
+We can go further and make use of `validate?` to also test the nested `:address` hash.
+
+```ruby
+> nested_keys = {:value_keys=>[:street, :town, :country]}
+>  if Vert.validate?(person, :keys => keys)
+*   Vert.validate(person[:address], :keys => nested_keys)
+* end
+#=> "The data does not contain the following key/s Missing keys:- country"
+```
+
+Using the `keys` hash, `validate` performs these additional tests:
+
+1. Keys specified in the `:value_keys` array exists
+1. Keys specified in the `:array_keys` array exists and is a non-empty array 
+1. Keys specified in the `:hash_keys` array exists and is a non-empty hash
+
+###JSON validation
+You can use `validate_json` if your data is specified in JSON. 
+
+```ruby
+> json = "{\"key\" : \"value\"}\n"
+> Vert.validate_json(json)
+#=> nil
+#returns nil when all tests pass
+```
+
+`validate_json` performs the following default tests on JSON data.
+
+1. Validates that data is a string and non-empty
+1. Validates that data is not empty JSON
+1. Validates that data is not malformed JSON
+
+You can test for a wider array of data integrity guarantees than `validate` if you specify an Avro schema to match against your JSON data. This will test both the presence and types of values in your JSON data.
 hashes.
 
-Given the JSON object *outfit_json*.
-
-```JSON
-{"clothing":
-   [{"shoes":
-      {"brand": "Nike", 
-       "size": "nine"}, 
-     "watch": "Casio"
-   }]}
-```
-
-and the matchihng Avro schema, *outfit_avro_schema* (Avro schemas are plain JSON).
-
-```JSON
-{
-  "type": "record",
-  "name": "Outfit",
-  "fields": [
-    {
-      "name": "clothing",
-      "type": {
-        "type": "array",
-        "items": {
-          "type": "record",
-          "name": "clothing_item",
-          "fields": [
-            {
-              "name": "shoes",
-              "type": {
-                "type": "record",
-                "name": "shoe_item",
-                "fields": [
-                  {
-                    "name": "brand",
-                    "type": "string"
-                  },
-                  {
-                    "name": "size",
-                    "type": "int"
-                  }
-                ]
-              }
-            },
-            {
-              "name": "watch",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    }
-  ]
-}
-```
-
-The `validate_json?` call returns false.
+Given the JSON string `user_json` and the matchihng Avro schema, `user_schema` we can specify a `:schema` with `validate_json?`.
 
 ```ruby
-Vert.validate_json?(outfit_json, outfit_avro_schema)
-=> false
+> user_json = <<-json
+ {"name": "Jacob Smith",
+  "email": "jasmith@jsmith.com",
+  "username": "jasmith"}
+json
+> user_schema = <<-json
+ {"type": "record",
+  "name": "User",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "username",
+      "type": "string"
+    }
+	]}
+json
+	
+> Vert.validate_json?(user_json, :schema => user_schema)
+#=> true
+# The JSON data matches the Avro schema provided.
 ```
-According to the schema the size value of the items in the shoe array
-must be an integer so the validate_json? call returns false. While the
-Avro schema above looks complicated, it is relatively easy to
-construct and it allows you to reject data that does not meet your
-requirements. Read more about Avro's JSON schema specification [here](https://avro.apache.org/docs/1.7.6/spec.html#schemas).
 
-### Custom Error Handling 
+According to the schema above, `name`, `email` and `username` are required JSON keys and they must all be strings. Since these criteria are met by `user_json` the `validate_json?` call returns true.
 
-While Vert will conveniently provide validation of your program's
-inputs you may find yourself wanting more than the default error
-messages that Vert provides. To make this process easy, you can specify
+The Avro schema is relatively easy to construct and allows you to reject data that does not meet precise requirements. Read more about Avro's JSON schema specification [here](https://avro.apache.org/docs/current/spec.html).
+
+###Custom error handling 
+
+You may find yourself wanting more than the default error
+messages that Vert provides, especially when you want to produce application
+specific error messages. To make this process easy, you can specify
 a custom error to be thrown for any of Vert's validation tests. This
 way you can give your program helpful error messages wihtout
 re-implementing any of Vert's validations.
 
 ```ruby
-user = {
-    "name" => "Jacob Smith",
-    "email" => "jasmith@example.com"
-    "username" => "JDog249"
-}
+> user = {
+# => {:name=>"Jacob Smith", :email=>"jasmith@jsmith.com"}
 ```
 
-Given the *user* hash requires a "phone" key as well, we can get Vert
-to throw a custom error when validating this hash.
+Given that the `user` hash also requires a `:username` key as well, we can throw a custom error when validating this hash.
 
 ```ruby
-options = {
-    :keys => {
-        :value_keys => ["name", "email", "username", "phone"]
-    },
-    :custom_errors => {
-        :absent_key => "The user hash must have name, email, username
-    and phone."
-    }
-}
+#Specify a :keys hash with the required keys
+> user_keys = {:value_keys=>[:name, :email, :username]}
 
-Vert.validate(user, options)
+#Specify a :custom_errors hash with the custom error we would like
+#to throw when a key is missing
+> custom_errors = {:absent_key=>"User must have name, email and username."}
 
-=>"The user hash must have name, email, username and phone.
-Missing keys:- phone"
+> Vert.validate(user, :keys => user_keys, :custom_errors => custom_errors)
+#=> "User must have name, email and username. Missing keys:- username"
 ```
 
 The options hash throws the custom error provided instead of the
-default :absent_key error. You also get a list of the missing keys.
+default :absent_key error as well as a list of the missing keys.
 
-You can get the list of all custom error keys to throw prsonalized
-error messages using `Vert.get_error_keys`.
+You can get the list of all error keys you can override this way using `get_error_keys`.
+
+```ruby
+> Vert.get_error_keys
+#=>  {:not_a_hash=>"Not a hash.",
+#     :empty=>"The hash is empty.",
+#     :absent_key=>"The data does not contain the following key/s",
+#     :array_type=>"The following key/s do not have Array type values.",
+#     :hash_type=>"The following key/s do not have Hash type values.",
+#     :array_empty=>"The following array key/s are empty.",
+#     :hash_empty=>"The following hash key/s are empty.",
+#     :not_a_string=>"Not a JSON string.",
+#     :empty_json=>"The JSON string is empty.",
+#     :empty_json_object=>"The JSON object is empty.",
+#     :malformed_json=>"The JSON string is malformed",
+#     :invalid_avro_schema=>"The avro schema is invalid",
+#     :invalid_avro_datum=>"The JSON provided is not an instance of the schema."}
+```
+
+##Use as a mixin 
+
+You can mixin the Vert methods directly instead of calling the methods on the gem.
+
+```ruby
+require 'vert'
+
+class ClassThatExtendsVert
+  extends Vert
+end
+```
 
 ---
 
