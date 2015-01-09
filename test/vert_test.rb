@@ -63,9 +63,9 @@ class VertTest < MiniTest::Unit::TestCase
   end
 
   def setup_validate_options_errors
-    @valid_options = {keys: {value_keys: [:value_key_1, :value_key_2]}, custom_errors: {empty: "It's empty"}}
-    @invalid_options_keys_hash = {keys: {val_keys: [3], arr_keys: [4], has_keys: [5]}}
-    @invalid_options_custom_errors_hash = {keys: {value_keys: [3, 4]}, custom_errors: {thisisempty: "It's empty"}}
+    @valid_options = {keys: {required_keys: [:value_key_1, :value_key_2]}, custom_errors: {empty: "It's empty"}}
+    @invalid_options_keys_hash = {keys: {req_keys: [3], arr_keys: [4], has_keys: [5]}}
+    @invalid_options_custom_errors_hash = {keys: {required_keys: [3, 4]}, custom_errors: {thisisempty: "It's empty"}}
     @invalid_options = {key: {}, errors: {}}
   end
 
@@ -130,13 +130,13 @@ class VertTest < MiniTest::Unit::TestCase
     assert_equal(@custom_empty_error, error_message_helper(result), "Expects custom error message for empty error to be thrown")
   end
 
-  def test_validate_throws_error_when_value_keys_not_found
-    result = Vert.validate(@valid_data, {keys: {value_keys: [:value_key_1, :absent_value_key]}})
+  def test_validate_throws_error_when_required_keys_not_found
+    result = Vert.validate(@valid_data, {keys: {required_keys: [:value_key_1, :absent_value_key]}})
     assert_match( /#{Vert::ABSENT_KEY_ERROR}/,error_message_helper(result), "Expects that the specified value keys exist in the hash")
   end
 
-  def test_validate_throws_custom_error_when_value_keys_not_found
-    result = Vert.validate(@valid_data, {keys: {value_keys: [:value_key_1, :absent_value_key]}, custom_errors: {absent_key: @custom_absent_key_error}})
+  def test_validate_throws_custom_error_when_required_keys_not_found
+    result = Vert.validate(@valid_data, {keys: {required_keys: [:value_key_1, :absent_value_key]}, custom_errors: {absent_key: @custom_absent_key_error}})
     assert_match( /#{@custom_absent_key_error}/,error_message_helper(result), "Expects that a custom error is given when the specified value keys do not exist")
   end
 

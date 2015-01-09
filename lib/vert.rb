@@ -15,7 +15,7 @@ module Vert
   EMPTY_ERROR = "The hash is empty." 
   EMPTY_ERROR_KEY = :empty
 
-  ABSENT_KEY_ERROR = "The data does not contain the following key/s"  
+  ABSENT_KEY_ERROR = "The data does not contain one or more required keys."  
   ABSENT_KEY_ERROR_KEY = :absent_key
  
   ARRAY_TYPE_ERROR = "The following key/s do not have Array type values." 
@@ -30,7 +30,7 @@ module Vert
   HASH_EMPTY_ERROR = "The following hash key/s are empty."
   HASH_EMPTY_ERROR_KEY = :hash_empty
 
-  #error messages for json validation
+  #error messages for JSON validation
   NOT_A_STRING_ERROR = "Not a JSON string."
   NOT_A_STRING_ERROR_KEY = :not_a_string
 
@@ -54,7 +54,7 @@ module Vert
   TYPE_ENUM = {array_keys: Array, hash_keys: Hash}
   OPTIONS_HASH_ENUM = [:keys, :custom_errors]
   OPTIONS_JSON_HASH_ENUM = [:schema, :custom_errors]
-  KEYS_ENUM = [:value_keys, :array_keys, :hash_keys]
+  KEYS_ENUM = [:required_keys, :array_keys, :hash_keys]
   ERROR_KEY_ENUM = {
     NOT_A_HASH_ERROR_KEY => NOT_A_HASH_ERROR,
     EMPTY_ERROR_KEY => EMPTY_ERROR,
@@ -150,8 +150,8 @@ module Vert
 
   def test_validations(hash, options)
     test_for_default_hash_errors(hash, options)
-    if options_key_types_present?(options, :value_keys)
-      raise_when_keys_absent(hash, options, :value_keys) 
+    if options_key_types_present?(options, :required_keys)
+      raise_when_keys_absent(hash, options, :required_keys) 
     elsif options_key_types_present?(options, :array_keys)
       test_for_array_key_errors(hash, options)
     elsif options_key_types_present?(options, :hash_keys)
@@ -258,7 +258,7 @@ module Vert
   end
 
   def build_missing_key_error(options, missing_keys_array)
-    "#{build_error_message(options, ABSENT_KEY_ERROR_KEY)} Missing keys:- #{missing_keys_array*", "}"
+    "#{build_error_message(options, ABSENT_KEY_ERROR_KEY)}\nMissing key/s: #{missing_keys_array*", "}"
   end
 
   def build_error_message(options, error_key)

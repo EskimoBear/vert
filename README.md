@@ -17,7 +17,7 @@ Install the gem
 gem install vert
 ```
 
-Vert has been tested on MRI Ruby 1.9.3.
+Vert has been tested on MRI Ruby 1.9.3 and 2.1.
 
 ##Usage
 
@@ -62,9 +62,10 @@ Given the following `person` hash
 We can create a `keys` hash which tests for the presence of keys. This way we are warned that the person hash does not contain an `:age` key.
 
 ```ruby
-> keys = {:value_keys=>[:firstname, :lastname, :age], :hash_keys=>[:address]}
+> keys = {:required_keys=>[:firstname, :lastname, :age], :hash_keys=>[:address]}
 > Vert.validate(person, :keys => keys)
-#=> "The data does not contain the following key/s Missing keys:- age"
+#=> "The data does not contain one or more required keys.
+#    Missing keys:- age"
 ```
 
 Say we've added `:age` to person to correct this mistake, we now get all tests passing for person.
@@ -78,16 +79,17 @@ Say we've added `:age` to person to correct this mistake, we now get all tests p
 We can go further and make use of `validate?` to also test the nested `:address` hash.
 
 ```ruby
-> nested_keys = {:value_keys=>[:street, :town, :country]}
+> nested_keys = {:required_keys=>[:street, :town, :country]}
 >  if Vert.validate?(person, :keys => keys)
 *   Vert.validate(person[:address], :keys => nested_keys)
 * end
-#=> "The data does not contain the following key/s Missing keys:- country"
+#=> "The data does not contain one or more required keys.
+#    Missing keys:- country"
 ```
 
 Using the `keys` hash, `validate` performs these additional tests:
 
-1. Keys specified in the `:value_keys` array exists
+1. Keys specified in the `:required_keys` array exists
 1. Keys specified in the `:array_keys` array exists and is a non-empty array 
 1. Keys specified in the `:hash_keys` array exists and is a non-empty hash
 
@@ -164,14 +166,15 @@ Given that the `user` hash also requires a `:username` key as well, we can throw
 
 ```ruby
 #Specify a :keys hash with the required keys
-> user_keys = {:value_keys=>[:name, :email, :username]}
+> user_keys = {:required_keys=>[:name, :email, :username]}
 
 #Specify a :custom_errors hash with the custom error we would like
 #to throw when a key is missing
 > custom_errors = {:absent_key=>"User must have name, email and username."}
 
 > Vert.validate(user, :keys => user_keys, :custom_errors => custom_errors)
-#=> "User must have name, email and username. Missing keys:- username"
+#=> "User must have name, email and username.
+#    Missing keys:- username"
 ```
 
 The options hash throws the custom error provided instead of the
@@ -183,7 +186,7 @@ You can get the list of all error keys you can override this way using `get_erro
 > Vert.get_error_keys
 #=>  {:not_a_hash=>"Not a hash.",
 #     :empty=>"The hash is empty.",
-#     :absent_key=>"The data does not contain the following key/s",
+#     :absent_key=>"The data does not contain one or more required keys.",
 #     :array_type=>"The following key/s do not have Array type values.",
 #     :hash_type=>"The following key/s do not have Hash type values.",
 #     :array_empty=>"The following array key/s are empty.",
