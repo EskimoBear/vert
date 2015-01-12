@@ -1,6 +1,6 @@
 #Changes between 0.2.1 and 0.3.0
 
-##Breaking changes.
+##Breaking changes
 - The `:keys` array for testing required keys has been changed from `:value_keys` to `:required_keys`.
 
 ```ruby
